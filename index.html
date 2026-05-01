@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title id="docTitle">Team Randomizer Pro</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f7f6; color: #333; max-width: 800px;
+            margin: 0 auto; padding: 20px;
+        }
+        .header-container { display: flex; justify-content: space-between; align-items: center; }
+        .lang-btn {
+            background-color: #ecf0f1; border: 2px solid #bdc3c7; padding: 5px 15px;
+            border-radius: 20px; cursor: pointer; font-weight: bold; transition: 0.3s;
+        }
+        .lang-btn:hover { background-color: #bdc3c7; }
+        .card { background: #fff; padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        h1, h2, h3 { color: #2c3e50; text-align: center; }
+        .form-group { margin-bottom: 15px; }
+        label { font-weight: bold; display: block; margin-bottom: 5px; }
+        input[type="text"], input[type="password"], input[type="number"] {
+            width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; font-size: 16px;
+        }
+        button {
+            background-color: #3498db; color: white; border: none; padding: 10px 20px;
+            border-radius: 5px; cursor: pointer; font-size: 16px; width: 100%; transition: 0.3s; font-weight: bold;
+        }
+        button:hover { background-color: #2980b9; }
+        .btn-success { background-color: #2ecc71; font-size: 18px; }
+        .btn-success:hover { background-color: #27ae60; }
+        .btn-warning { background-color: #f39c12; }
+        .btn-warning:hover { background-color: #e67e22; }
+        .btn-danger { background-color: #e74c3c; width: auto; padding: 5px 10px; font-size: 12px; }
+        .btn-danger:hover { background-color: #c0392b; }
+        .btn-secondary { background-color: #95a5a6; width: auto; }
+        .flex-row { display: flex; gap: 10px; align-items: center; }
+        
+        /* สไตล์สำหรับ Roster Checkboxes */
+        .roster-grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; margin-top: 15px;
+        }
+        .player-item {
+            background: #ecf0f1; padding: 10px; border-radius: 5px; display: flex; justify-content: space-between; align-items: center;
+            border-left: 4px solid #bdc3c7; transition: 0.2s;
+        }
+        .player-item:hover { background: #e0e6e8; }
+        .player-item.selected { border-left-color: #2ecc71; background: #e8f8f5; }
+        .player-label { display: flex; align-items: center; gap: 8px; cursor: pointer; width: 100%; word-break: break-all;}
+        .player-label input { width: 18px; height: 18px; cursor: pointer; }
+
+        .radio-group { display: flex; gap: 20px; align-items: center; margin-bottom: 10px; }
+        .radio-group label { display: inline; font-weight: normal; cursor: pointer; }
+        
+        .team-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-top: 20px; }
+        .team-box { background: #ecf0f1; border-radius: 8px; padding: 15px; border-top: 5px solid #3498db; }
+        .team-box.highlight-match { border: 4px solid #f39c12; box-shadow: 0 0 15px rgba(243, 156, 18, 0.5); }
+        .team-name-input {
+            width: 100%; font-size: 18px; font-weight: bold; text-align: center; border: none;
+            background: transparent; border-bottom: 2px dashed #bdc3c7; margin-bottom: 10px; color: #2c3e50;
+        }
+        .team-name-input:focus { outline: none; border-bottom: 2px solid #3498db; }
+        ul.team-list { list-style-type: none; padding: 0; margin: 0; }
+        ul.team-list li { background: #fff; margin-bottom: 5px; padding: 8px; border-radius: 4px; text-align: center; border: 1px solid #e0e0e0;}
+        .match-display { background: #fff3cd; padding: 15px; border-radius: 8px; text-align: center; margin-top: 20px; border: 2px dashed #ffc107; display: none; color: #856404; }
+        .button-group { display: flex; gap: 10px; margin-top: 20px; }
+        
+        /* Views */
+        #authView, #appView { display: none; }
+    </style>
+</head>
+<body>
+
+    <div class="header-container">
+        <h1 id="mainTitle">Team Randomizer 🎲</h1>
+        <button class="lang-btn" id="btnLang" onclick="toggleLanguage()">🇹🇭 TH</button>
+    </div>
+
+    <!-- ===== AUTHENTICATION VIEW ===== -->
+    <div id="authView" class="card" style="max-width: 400px; margin: 40px auto;">
+        <h2 id="lblAuthTitle">Login / Register</h2>
+        <div class="form-group">
+            <label id="lblUsername">Username</label>
+            <input type="text" id="usernameInput" placeholder="Enter username">
+        </div>
+        <div class="form-group">
+            <label id="lblPassword">Password</label>
+            <input type="password" id="passwordInput" placeholder="Enter password">
+        </div>
+        <div style="display: flex; gap: 10px;">
+            <button onclick="handleLogin()" id="btnLogin">Login</button>
+            <button onclick="handleRegister()" id="btnRegister" class="btn-success">Register</button>
+        </div>
+        <p style="text-align: center; font-size: 13px; color: #7f8c8d; margin-top: 15px;" id="authHint">
+            Data is saved locally in this browser.
+        </p>
+    </div>
+
+    <!-- ===== MAIN APP VIEW ===== -->
+    <div id="appView">
+        <div class="card" style="display: flex; justify-content: space-between; align-items: center; padding: 15px 20px;">
+            <div style="font-weight: bold; font-size: 18px;">👤 <span id="welcomeText">Welcome</span>, <span id="displayUser" style="color: #3498db;"></span></div>
+            <button onclick="handleLogout()" id="btnLogout" class="btn-secondary">Logout</button>
+        </div>
+
+        <!-- Section 1: Player Pool -->
+        <div class="card">
+            <h3 id="lblPoolTitle" style="margin-top: 0;">1. Select Players (<span id="selectedCount">0</span> Selected)</h3>
+            
+            <div class="flex-row">
+                <input type="text" id="newPlayerName" placeholder="Add new friend's name...">
+                <button onclick="addPlayer()" id="btnAddPlayer" style="width: 120px;">+ Add</button>
+            </div>
+
+            <div class="roster-grid" id="rosterContainer">
+                <!-- รายชื่อจำลองจะถูกสร้างที่นี่ -->
+            </div>
+            
+            <div style="margin-top: 15px; font-size: 14px; color: #7f8c8d; text-align: center;" id="lblCheckHint">
+                Check the boxes of the players joining today.
+            </div>
+        </div>
+
+        <!-- Section 2: Settings -->
+        <div class="card" id="settingsSection">
+            <label id="lblStep3">2. Select Split Mode:</label>
+            <div class="radio-group">
+                <input type="radio" id="modeTeams" name="splitMode" value="teams" checked onchange="toggleMode()">
+                <label for="modeTeams" id="lblModeTeams">By "Number of Teams"</label>
+                <input type="number" id="numTeams" min="2" value="2" style="width: 80px;">
+            </div>
+            <div class="radio-group">
+                <input type="radio" id="modePlayers" name="splitMode" value="players" onchange="toggleMode()">
+                <label for="modePlayers" id="lblModePlayers">By "Players per Team"</label>
+                <input type="number" id="numPerTeam" min="2" value="2" style="width: 80px;" disabled>
+            </div>
+            
+            <button class="btn-success" onclick="randomizeTeams()" id="btnRand" style="margin-top: 15px;">🎲 Randomize Teams!</button>
+        </div>
+
+        <!-- Section 3: Results -->
+        <div id="resultsSection"></div>
+    </div>
+
+    <script>
+        // Dictionary สำหรับ 2 ภาษา
+        const dict = {
+            en: {
+                title: "Team Randomizer 🎲",
+                authTitle: "Login / Register",
+                username: "Username",
+                password: "Password",
+                login: "Login",
+                register: "Register",
+                authHint: "Account and players are saved locally on this browser.",
+                welcome: "Welcome",
+                logout: "Logout",
+                poolTitle: "1. Select Players",
+                selected: "Selected",
+                addNew: "Add new friend's name...",
+                btnAdd: "+ Add",
+                checkHint: "Check the boxes of the players joining today.",
+                step3: "2. Select Split Mode:",
+                modeTeams: "By \"Number of Teams\"",
+                modePlayers: "By \"Players per Team\"",
+                btnRandomize: "🎲 Randomize Teams!",
+                alertSelectMore: "Please select at least 2 players.",
+                alertExists: "This name is already in the list!",
+                alertEmpty: "Please enter a name.",
+                alertLoginFail: "Incorrect password or username not found.",
+                alertRegSuccess: "Registration successful! You can now login.",
+                alertRegExists: "Username already exists.",
+                resultTitle: "🎉 Team Results 🎉",
+                defaultTeamName: "Team",
+                placeholderTeam: "Name your team...",
+                btnFirstMatch: "⚔️ Random First Match!",
+                btnReroll: "🔄 Reroll Players Now!",
+                alertMinTeams: "Need at least 2 teams to random a match!",
+                firstMatchText: "Opening Match:"
+            },
+            th: {
+                title: "โปรแกรมสุ่มแบ่งทีม 🎲",
+                authTitle: "เข้าสู่ระบบ / สมัครสมาชิก",
+                username: "ชื่อผู้ใช้งาน",
+                password: "รหัสผ่าน",
+                login: "เข้าสู่ระบบ",
+                register: "สมัครสมาชิก",
+                authHint: "บัญชีและรายชื่อจะถูกบันทึกไว้ในเบราว์เซอร์เครื่องนี้เท่านั้น",
+                welcome: "ยินดีต้อนรับ",
+                logout: "ออกจากระบบ",
+                poolTitle: "1. เลือกผู้เล่นที่จะเล่นวันนี้",
+                selected: "คน",
+                addNew: "พิมพ์ชื่อเพื่อนใหม่...",
+                btnAdd: "+ เพิ่มชื่อ",
+                checkHint: "ติ๊กถูกหน้าชื่อเพื่อนที่จะลงเล่นในรอบนี้",
+                step3: "2. เลือกรูปแบบการแบ่งทีม:",
+                modeTeams: "แบ่งตาม \"จำนวนทีม\"",
+                modePlayers: "แบ่งตาม \"จำนวนคน/ทีม\"",
+                btnRandomize: "🎲 สุ่มทีมเลย!",
+                alertSelectMore: "กรุณาเลือกผู้เล่นอย่างน้อย 2 คนครับ",
+                alertExists: "ชื่อนี้มีอยู่ในคลังแล้วครับ",
+                alertEmpty: "กรุณาพิมพ์ชื่อด้วยครับ",
+                alertLoginFail: "ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง",
+                alertRegSuccess: "สมัครสมาชิกสำเร็จ! กรุณากดเข้าสู่ระบบ",
+                alertRegExists: "ชื่อผู้ใช้นี้มีคนใช้แล้วครับ",
+                resultTitle: "🎉 ผลการจัดทีม 🎉",
+                defaultTeamName: "ทีมที่",
+                placeholderTeam: "ตั้งชื่อทีม...",
+                btnFirstMatch: "⚔️ สุ่มคู่เปิดสนาม!",
+                btnReroll: "🔄 สุ่มผู้เล่นใหม่ทันที!",
+                alertMinTeams: "ต้องมีอย่างน้อย 2 ทีม ถึงจะสุ่มแข่งได้ครับ!",
+                firstMatchText: "คู่เปิดสนาม:"
+            }
+        };
+
+        let currentLang = 'en';
+        let currentUser = null; 
+        
+        // โครงสร้างข้อมูลใน LocalStorage: { "user1": { password: "123", roster: ["A", "B"] } }
+        let db = JSON.parse(localStorage.getItem('teamAppDB')) || {};
+
+        // === UI & Language Updates ===
+        function toggleLanguage() {
+            currentLang = currentLang === 'en' ? 'th' : 'en';
+            updateUI();
+        }
+
+        function updateUI() {
+            document.getElementById('btnLang').innerText = currentLang === 'en' ? '🇹🇭 TH' : '🇬🇧 EN';
+            document.getElementById('docTitle').innerText = dict[currentLang].title;
+            document.getElementById('mainTitle').innerText = dict[currentLang].title;
+            
+            // Auth View
+            document.getElementById('lblAuthTitle').innerText = dict[currentLang].authTitle;
+            document.getElementById('lblUsername').innerText = dict[currentLang].username;
+            document.getElementById('lblPassword').innerText = dict[currentLang].password;
+            document.getElementById('btnLogin').innerText = dict[currentLang].login;
+            document.getElementById('btnRegister').innerText = dict[currentLang].register;
+            document.getElementById('authHint').innerText = dict[currentLang].authHint;
+
+            // App View
+            document.getElementById('welcomeText').innerText = dict[currentLang].welcome;
+            document.getElementById('btnLogout').innerText = dict[currentLang].logout;
+            document.getElementById('newPlayerName').placeholder = dict[currentLang].addNew;
+            document.getElementById('btnAddPlayer').innerText = dict[currentLang].btnAdd;
+            document.getElementById('lblCheckHint').innerText = dict[currentLang].checkHint;
+            document.getElementById('lblStep3').innerText = dict[currentLang].step3;
+            document.getElementById('lblModeTeams').innerText = dict[currentLang].modeTeams;
+            document.getElementById('lblModePlayers').innerText = dict[currentLang].modePlayers;
+            document.getElementById('btnRand').innerText = dict[currentLang].btnRandomize;
+            
+            updatePoolTitleCount();
+
+            // Results UI
+            if (document.getElementById('resTitle')) document.getElementById('resTitle').innerText = dict[currentLang].resultTitle;
+            if (document.getElementById('btnFirstMatch')) document.getElementById('btnFirstMatch').innerHTML = dict[currentLang].btnFirstMatch;
+            if (document.getElementById('btnReroll')) document.getElementById('btnReroll').innerHTML = dict[currentLang].btnReroll;
+            
+            document.querySelectorAll('.team-name-input').forEach((input, index) => {
+                input.placeholder = dict[currentLang].placeholderTeam;
+                const oldEn = `${dict['en'].defaultTeamName} ${index + 1}`;
+                const oldTh = `${dict['th'].defaultTeamName} ${index + 1}`;
+                if (input.value === oldEn || input.value === oldTh) {
+                    input.value = `${dict[currentLang].defaultTeamName} ${index + 1}`;
+                }
+            });
+
+            const matchTitleSpan = document.getElementById('matchTitleText');
+            if (matchTitleSpan) matchTitleSpan.innerText = `⚔️ ${dict[currentLang].firstMatchText} `;
+        }
+
+        // === Authentication ===
+        function saveDB() { localStorage.setItem('teamAppDB', JSON.stringify(db)); }
+
+        function handleRegister() {
+            const user = document.getElementById('usernameInput').value.trim();
+            const pass = document.getElementById('passwordInput').value.trim();
+            if (!user || !pass) return alert(dict[currentLang].alertEmpty);
+            
+            if (db[user]) {
+                alert(dict[currentLang].alertRegExists);
+            } else {
+                db[user] = { password: pass, roster: [] };
+                saveDB();
+                alert(dict[currentLang].alertRegSuccess);
+            }
+        }
+
+        function handleLogin() {
+            const user = document.getElementById('usernameInput').value.trim();
+            const pass = document.getElementById('passwordInput').value.trim();
+            
+            if (db[user] && db[user].password === pass) {
+                currentUser = user;
+                document.getElementById('usernameInput').value = '';
+                document.getElementById('passwordInput').value = '';
+                showApp();
+            } else {
+                alert(dict[currentLang].alertLoginFail);
+            }
+        }
+
+        function handleLogout() {
+            currentUser = null;
+            document.getElementById('resultsSection').innerHTML = '';
+            showAuth();
+        }
+
+        function showAuth() {
+            document.getElementById('authView').style.display = 'block';
+            document.getElementById('appView').style.display = 'none';
+        }
+
+        function showApp() {
+            document.getElementById('authView').style.display = 'none';
+            document.getElementById('appView').style.display = 'block';
+            document.getElementById('displayUser').innerText = currentUser;
+            renderRoster();
+        }
+
+        // === Player Roster Management ===
+        function addPlayer() {
+            const nameInput = document.getElementById('newPlayerName');
+            const name = nameInput.value.trim();
+            
+            if (!name) return alert(dict[currentLang].alertEmpty);
+            if (db[currentUser].roster.includes(name)) return alert(dict[currentLang].alertExists);
+
+            db[currentUser].roster.push(name);
+            saveDB();
+            nameInput.value = '';
+            renderRoster();
+        }
+
+        function deletePlayer(name) {
+            db[currentUser].roster = db[currentUser].roster.filter(p => p !== name);
+            saveDB();
+            renderRoster();
+        }
+
+        function updatePoolTitleCount() {
+            const selectedBoxes = document.querySelectorAll('.player-cb:checked').length;
+            document.getElementById('lblPoolTitle').innerHTML = `1. ${dict[currentLang].poolTitle.split(' (')[0]} (<span style="color:#2ecc71;">${selectedBoxes}</span> ${dict[currentLang].selected})`;
+        }
+
+        function toggleItemStyle(cb) {
+            const parent = cb.closest('.player-item');
+            if (cb.checked) parent.classList.add('selected');
+            else parent.classList.remove('selected');
+            updatePoolTitleCount();
+        }
+
+        function renderRoster() {
+            const container = document.getElementById('rosterContainer');
+            container.innerHTML = '';
+            const roster = db[currentUser].roster;
+
+            roster.forEach(player => {
+                const div = document.createElement('div');
+                div.className = 'player-item selected'; // ค่าเริ่มต้นให้เลือกไว้เลย
+
+                const label = document.createElement('label');
+                label.className = 'player-label';
+                
+                const cb = document.createElement('input');
+                cb.type = 'checkbox';
+                cb.className = 'player-cb';
+                cb.value = player;
+                cb.checked = true; // เลือกอัตโนมัติ
+                cb.onchange = function() { toggleItemStyle(this); };
+
+                const textNode = document.createTextNode(player);
+                
+                label.appendChild(cb);
+                label.appendChild(textNode);
+
+                const delBtn = document.createElement('button');
+                delBtn.className = 'btn-danger';
+                delBtn.innerText = 'X';
+                delBtn.onclick = function() { deletePlayer(player); };
+
+                div.appendChild(label);
+                div.appendChild(delBtn);
+                container.appendChild(div);
+            });
+            updatePoolTitleCount();
+        }
+
+        // === Randomize Logic ===
+        function toggleMode() {
+            const mode = document.querySelector('input[name="splitMode"]:checked').value;
+            if (mode === 'teams') {
+                document.getElementById('numTeams').disabled = false;
+                document.getElementById('numPerTeam').disabled = true;
+            } else {
+                document.getElementById('numTeams').disabled = true;
+                document.getElementById('numPerTeam').disabled = false;
+            }
+        }
+
+        function shuffle(array) {
+            let currentIndex = array.length, randomIndex;
+            while (currentIndex !== 0) {
+                randomIndex = Math.floor(Math.random() * currentIndex);
+                currentIndex--;
+                [array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]];
+            }
+            return array;
+        }
+
+        function randomizeFirstMatch() {
+            const teamInputs = document.querySelectorAll('.team-name-input');
+            let teamNames = [];
+            teamInputs.forEach((input, index) => {
+                let name = input.value.trim();
+                teamNames.push(name || `${dict[currentLang].defaultTeamName} ${index + 1}`);
+            });
+
+            if (teamNames.length < 2) return alert(dict[currentLang].alertMinTeams);
+
+            let shuffledTeams = shuffle([...teamNames]);
+            let teamA = shuffledTeams[0];
+            let teamB = shuffledTeams[1];
+
+            document.querySelectorAll('.team-box').forEach(box => box.classList.remove('highlight-match'));
+
+            document.querySelectorAll('.team-box').forEach(box => {
+                const teamNameInput = box.querySelector('.team-name-input');
+                if (teamNameInput.value === teamA || teamNameInput.value === teamB) {
+                    box.classList.add('highlight-match');
+                }
+            });
+
+            const matchDisplay = document.getElementById('firstMatchDisplay');
+            matchDisplay.innerHTML = `<h2 style="margin: 0;"><span id="matchTitleText">⚔️ ${dict[currentLang].firstMatchText} </span><span style="color: #d35400;">${teamA}</span> VS <span style="color: #d35400;">${teamB}</span> ⚔️</h2>`;
+            matchDisplay.style.display = 'block';
+        }
+
+        function randomizeTeams() {
+            // ดึงผู้เล่นเฉพาะคนที่ถูก "ติ๊กถูก"
+            const checkedBoxes = document.querySelectorAll('.player-cb:checked');
+            let players = Array.from(checkedBoxes).map(cb => cb.value);
+
+            if (players.length < 2) return alert(dict[currentLang].alertSelectMore);
+
+            players = shuffle(players);
+
+            const mode = document.querySelector('input[name="splitMode"]:checked').value;
+            let totalTeams = 0;
+
+            if (mode === 'teams') {
+                totalTeams = parseInt(document.getElementById('numTeams').value);
+            } else {
+                const perTeam = parseInt(document.getElementById('numPerTeam').value);
+                totalTeams = Math.ceil(players.length / perTeam);
+            }
+
+            if (totalTeams < 1 || isNaN(totalTeams)) totalTeams = 1;
+
+            let teams = Array.from({ length: totalTeams }, () => []);
+
+            players.forEach((player, index) => {
+                teams[index % totalTeams].push(player);
+            });
+
+            let savedTeamNames = [];
+            document.querySelectorAll('.team-name-input').forEach(input => {
+                savedTeamNames.push(input.value);
+            });
+
+            const resultsSection = document.getElementById('resultsSection');
+            resultsSection.innerHTML = `<h2 id="resTitle">${dict[currentLang].resultTitle}</h2>`;
+            
+            const teamContainer = document.createElement('div');
+            teamContainer.className = 'team-container';
+
+            teams.forEach((team, index) => {
+                const box = document.createElement('div');
+                box.className = 'team-box';
+                
+                const teamNameVal = savedTeamNames[index] || `${dict[currentLang].defaultTeamName} ${index + 1}`;
+                
+                let html = `<input type="text" class="team-name-input" value="${teamNameVal}" placeholder="${dict[currentLang].placeholderTeam}"><ul class="team-list">`;
+                team.forEach(member => {
+                    html += `<li>${member}</li>`;
+                });
+                html += `</ul>`;
+                
+                box.innerHTML = html;
+                teamContainer.appendChild(box);
+            });
+
+            resultsSection.appendChild(teamContainer);
+
+            const matchDisplay = document.createElement('div');
+            matchDisplay.id = 'firstMatchDisplay';
+            matchDisplay.className = 'match-display';
+            resultsSection.appendChild(matchDisplay);
+
+            const btnGroup = document.createElement('div');
+            btnGroup.className = 'button-group';
+
+            const firstMatchBtn = document.createElement('button');
+            firstMatchBtn.id = 'btnFirstMatch';
+            firstMatchBtn.className = 'btn-warning';
+            firstMatchBtn.innerHTML = dict[currentLang].btnFirstMatch;
+            firstMatchBtn.onclick = randomizeFirstMatch;
+
+            const rerollBtn = document.createElement('button');
+            rerollBtn.id = 'btnReroll';
+            rerollBtn.className = 'btn-success';
+            rerollBtn.innerHTML = dict[currentLang].btnReroll;
+            rerollBtn.onclick = randomizeTeams;
+
+            btnGroup.appendChild(firstMatchBtn);
+            btnGroup.appendChild(rerollBtn);
+            resultsSection.appendChild(btnGroup);
+        }
+
+        // เริ่มต้นการทำงาน
+        updateUI();
+        showAuth();
+    </script>
+</body>
+</html>
